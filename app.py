@@ -1,6 +1,7 @@
 """Interactive Chainlit interface for Deep Research Agent with enhanced UX."""
 
 import asyncio
+import logging
 import chainlit as cl
 from pathlib import Path
 from datetime import datetime
@@ -17,6 +18,8 @@ from src.callbacks import (
     ResearchStage,
     emit_complete
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -215,20 +218,36 @@ async def run_research_with_updates(topic: str, progress_display: EnhancedProgre
     progress_callback.reset()
     
     async def on_progress(update: ProgressUpdate):
-        await progress_display.update(update)
+        try:
+            await progress_display.update(update)
+        except Exception as e:
+            logger.warning(f"Failed to update progress: {e}")
     
     progress_callback.register_async(on_progress)
     
     try:
         initial_state = ResearchState(research_topic=topic)
         graph = create_research_graph()
-        final_state = await graph.ainvoke(initial_state)
+        
+        # Invoke with proper error handling and event loop management
+        try:
+            final_state = await graph.ainvoke(initial_state)
+        except RuntimeError as e:
+            if "event loop" in str(e).lower() or "asyncio" in str(e).lower():
+                # Fallback: if event loop issue, log and retry without event loop context
+                logger.warning(f"Event loop issue detected, attempting sync invocation: {e}")
+                final_state = graph.invoke(initial_state)
+            else:
+                raise
         
         search_results = final_state.get('search_results', [])
         key_findings = final_state.get('key_findings', [])
         await emit_complete(topic, len(search_results), len(key_findings))
         
         return final_state
+    except Exception as e:
+        logger.error(f"Research execution failed: {e}", exc_info=True)
+        raise
     finally:
         progress_callback.unregister(on_progress)
 
@@ -765,7 +784,24 @@ async def main(message: cl.Message):
         ).send()
         return
     
-    await start_research(topic)
+    # Start research with comprehensive error handling
+    try:
+        await start_research(topic)
+    except Exception as e:
+        logger.error(f"Error in research handler: {e}", exc_info=True)
+        await cl.Message(
+            content=f"""## Error Processing Your Request
+
+**Error:** {str(e)}
+
+This might be a temporary issue. Please try:
+1. Simplifying your research topic
+2. Waiting a moment and trying again
+3. Checking if your API keys are configured correctly
+
+If the problem persists, please check the application logs.
+"""
+        ).send()
 
 
 if __name__ == "__main__":
