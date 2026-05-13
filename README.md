@@ -113,7 +113,7 @@ https://github.com/user-attachments/assets/df8404c6-7423-4a49-864a-bd4d59885c1b
 
 ```bash
 # Clone the repository
-git clone https://github.com/tarun7r/deep-research-agent.git
+git clone https://github.com/yashdhawane/deep-research-assistant-.git
 cd deep-research-agent
 
 # Create virtual environment
@@ -555,7 +555,6 @@ Supports:
 
 ## Contact
 
-- **GitHub**: [tarun7r](https://github.com/tarun7r)
-- **LinkedIn**: [Tarun Sai Goddu](https://www.linkedin.com/in/tarunsaigoddu/)
-- **Hugging Face**: [tarun7r](https://huggingface.co/tarun7r)
-- **Email**: tarunsaiaa@gmail.com
+- **GitHub**: [yashdhawane](https://github.com/yashdhawane)
+- **LinkedIn**: [Yash Dhawane](https://www.linkedin.com/in/yashdhawane/)
+
